@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>dYdX Treasury subDAO Dashboard</title>
+<title>dYdX Treasury subDAO — Financial Summary</title>
 <style>
   :root {
     --bg-0: #0b0b14;
@@ -53,13 +53,10 @@
     gap: 14px;
   }
   .logo {
-    width: 42px; height: 42px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
-    display: grid; place-items: center;
-    font-weight: 700; font-size: 18px; color: white;
-    box-shadow: 0 10px 30px rgba(105,102,255,0.25);
+    height: 44px;
+    display: flex; align-items: center;
   }
+  .logo img { height: 100%; width: auto; display: block; }
   .brand h1 {
     margin: 0;
     font-size: 20px;
@@ -228,6 +225,14 @@
   .kv .k { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.4px; }
   .kv .v { font-size: 15px; font-weight: 600; margin-top: 2px; }
   .kv .s { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .kv.total {
+    background: linear-gradient(135deg, rgba(105,102,255,0.18) 0%, rgba(160,118,255,0.10) 100%);
+    border-color: rgba(160,118,255,0.45);
+    box-shadow: 0 0 0 1px rgba(160,118,255,0.15) inset;
+  }
+  .kv.total .k { color: var(--accent-2); }
+  .kv.total .v { font-size: 17px; color: #ffffff; }
+  .kv.total .s { color: #c9c6ff; }
 
   details.delegations {
     background: var(--bg-2);
@@ -299,9 +304,9 @@
 
   <header class="top">
     <div class="brand">
-      <div class="logo">d</div>
+      <div class="logo"><img src="logo.png" alt="dYdX" onerror="this.onerror=null;this.src='https://dydx.exchange/logo.svg';" /></div>
       <div>
-        <h1>dYdX Treasury subDAO — Financial Dashboard</h1>
+        <h1>dYdX Treasury subDAO — Financial Summary</h1>
         <div class="sub">Real-time on-chain balances across Staking, Buyback, and Rev Share wallets</div>
       </div>
     </div>
@@ -317,6 +322,29 @@
     </div>
   </header>
 
+  <!-- Grand total panel -->
+  <div class="total-card">
+    <div>
+      <h2>Grand Total</h2>
+      <div class="usd" id="grand-total-usd"><span class="skeleton">$0</span></div>
+    </div>
+    <div class="metric">
+      <div class="label">DYDX</div>
+      <div class="value" id="grand-dydx">—</div>
+      <div class="sub" id="grand-dydx-usd">—</div>
+    </div>
+    <div class="metric">
+      <div class="label">USDC</div>
+      <div class="value" id="grand-usdc">—</div>
+      <div class="sub">incl. pending staking rewards</div>
+    </div>
+    <div class="metric">
+      <div class="label">Wallets tracked</div>
+      <div class="value">3</div>
+      <div class="sub">Staking · Buyback · Rev Share</div>
+    </div>
+  </div>
+
   <!-- Top stats strip -->
   <div class="price-strip">
     <div class="stat">
@@ -327,40 +355,17 @@
     <div class="stat">
       <div class="k">Total DYDX (all wallets)</div>
       <div class="v" id="total-dydx"><span class="skeleton">0 DYDX</span></div>
-      <div class="sv" id="total-dydx-breakdown">liquid + staked + unbonding + rewards</div>
+      <div class="sv">liquid + staked + unbonding</div>
     </div>
     <div class="stat">
       <div class="k">Total USDC (all wallets)</div>
       <div class="v" id="total-usdc"><span class="skeleton">0 USDC</span></div>
-      <div class="sv">Noble USDC (IBC)</div>
+      <div class="sv">liquid + pending rewards</div>
     </div>
     <div class="stat">
       <div class="k">Treasury Total (USD)</div>
-      <div class="v" id="total-usd"><span class="skeleton">$0.00</span></div>
+      <div class="v" id="total-usd"><span class="skeleton">$0</span></div>
       <div class="sv">DYDX × price + USDC</div>
-    </div>
-  </div>
-
-  <!-- Grand total panel -->
-  <div class="total-card">
-    <div>
-      <h2>Grand Total</h2>
-      <div class="usd" id="grand-total-usd"><span class="skeleton">$0.00</span></div>
-    </div>
-    <div class="metric">
-      <div class="label">DYDX</div>
-      <div class="value" id="grand-dydx">—</div>
-      <div class="sub" id="grand-dydx-usd">—</div>
-    </div>
-    <div class="metric">
-      <div class="label">USDC</div>
-      <div class="value" id="grand-usdc">—</div>
-      <div class="sub">≈ $1.00 per USDC</div>
-    </div>
-    <div class="metric">
-      <div class="label">Wallets tracked</div>
-      <div class="value">3</div>
-      <div class="sub">Staking · Buyback · Rev Share</div>
     </div>
   </div>
 
@@ -410,10 +415,16 @@
 
   // ===================== HELPERS =====================
   const byId = (id) => document.getElementById(id);
-  const fmtNum = (n, digits = 2) =>
+  const fmtNum = (n, digits = 0) =>
     (Number.isFinite(n) ? n : 0).toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
-  const fmtUSD = (n) => "$" + fmtNum(n, 2);
-  const fmtToken = (n, symbol, digits = 2) => fmtNum(n, digits) + " " + symbol;
+  const fmtUSD = (n) => "$" + fmtNum(n, 0);
+  const fmtToken = (n, symbol, digits = 0) => fmtNum(n, digits) + " " + symbol;
+  // Price keeps smart precision: sub-$1 shown with 4 decimals, above with 2
+  const fmtPrice = (p) => {
+    if (!Number.isFinite(p)) return "—";
+    const d = p < 1 ? 4 : 2;
+    return "$" + p.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+  };
   const shortAddr = (a) => a.slice(0, 10) + "…" + a.slice(-6);
   const divPow = (x, p) => Number(x) / Math.pow(10, p);
   const errs = [];
@@ -460,10 +471,12 @@
     const result = {
       address,
       liquidDYDX: 0,    // native DYDX (adydx) in bank
-      usdc: 0,          // USDC (IBC) in bank
+      liquidUSDC: 0,    // USDC (IBC) in bank
       stakedDYDX: 0,    // total delegated DYDX
       unbondingDYDX: 0, // in unbonding queue
-      rewardsDYDX: 0,   // pending staking rewards in DYDX
+      rewardsDYDX: 0,   // pending staking rewards in DYDX (usually 0 on dYdX Chain)
+      rewardsUSDC: 0,   // pending staking rewards in USDC (dYdX pays rewards in USDC)
+      totalUSDC: 0,     // liquidUSDC + rewardsUSDC
       delegations: [],  // per-validator
       errors: [],
     };
@@ -475,7 +488,7 @@
       const dydxRaw = sumAmount(balances, DYDX_DENOM);
       const usdcRaw = sumAmount(balances, USDC_DENOM);
       result.liquidDYDX = divPow(dydxRaw.toString(), DYDX_DECIMALS);
-      result.usdc = divPow(usdcRaw.toString(), USDC_DECIMALS);
+      result.liquidUSDC = divPow(usdcRaw.toString(), USDC_DECIMALS);
     } catch (e) {
       result.errors.push("balances: " + e.message);
     }
@@ -516,22 +529,26 @@
       if (!/404/.test(String(e.message))) result.errors.push("unbonding: " + e.message);
     }
 
-    // Pending staking rewards
+    // Pending staking rewards (on dYdX Chain, rewards are paid in USDC; DYDX rewards are typically 0)
     try {
       const j = await fetchFirstOk(`/cosmos/distribution/v1beta1/delegators/${address}/rewards`);
       const total = j.total || [];
-      // rewards come as decimal strings (large precision), with the bank denom
-      const entry = total.find((t) => t.denom === DYDX_DENOM);
-      if (entry) {
-        // Parse decimal string directly as number — amounts are in adydx scaled by 10^18
-        const num = Number(entry.amount);
-        if (Number.isFinite(num)) {
-          result.rewardsDYDX = num / Math.pow(10, DYDX_DECIMALS);
+      // Rewards come as decimal strings in base units (same scaling as bank balances)
+      for (const t of total) {
+        const n = Number(t.amount);
+        if (!Number.isFinite(n)) continue;
+        if (t.denom === DYDX_DENOM) {
+          result.rewardsDYDX = n / Math.pow(10, DYDX_DECIMALS);
+        } else if (t.denom === USDC_DENOM) {
+          result.rewardsUSDC = n / Math.pow(10, USDC_DECIMALS);
         }
       }
     } catch (e) {
       if (!/404/.test(String(e.message))) result.errors.push("rewards: " + e.message);
     }
+
+    // Roll up total USDC (liquid + pending rewards)
+    result.totalUSDC = result.liquidUSDC + result.rewardsUSDC;
 
     if (result.errors.length) {
       errs.push(`Wallet ${address.slice(0,10)}…: ${result.errors.join("; ")}`);
@@ -546,14 +563,15 @@
     for (const [i, w] of wallets.entries()) {
       const meta = WALLETS[i];
       const totalDYDX = w.liquidDYDX + w.stakedDYDX + w.unbondingDYDX + w.rewardsDYDX;
+      const totalUSDC = w.totalUSDC;
       const usdFromDYDX = price ? totalDYDX * price : null;
-      const usdTotal = (usdFromDYDX ?? 0) + w.usdc;
+      const usdTotal = (usdFromDYDX ?? 0) + totalUSDC;
 
       const delegationsHTML = (w.delegations.length)
         ? w.delegations.map(d => `
             <div class="deleg-row">
               <span title="${d.validator}">${d.validator ? shortAddr(d.validator) : "—"}</span>
-              <span class="val">${fmtToken(d.amount, "DYDX", 2)}</span>
+              <span class="val">${fmtToken(d.amount, "DYDX")}</span>
             </div>
           `).join("")
         : `<div class="deleg-row"><span>No active delegations</span><span></span></div>`;
@@ -564,7 +582,6 @@
         <div class="header">
           <div>
             <div class="title">${meta.name} Wallet</div>
-            <div class="role">${meta.role}</div>
           </div>
           <div class="usd-total">${price ? fmtUSD(usdTotal) : "—"}<span class="small">USD</span></div>
         </div>
@@ -573,33 +590,43 @@
         <div class="kv-grid">
           <div class="kv">
             <div class="k">Liquid (unstaked) DYDX</div>
-            <div class="v">${fmtToken(w.liquidDYDX, "DYDX", 2)}</div>
+            <div class="v">${fmtToken(w.liquidDYDX, "DYDX")}</div>
             <div class="s">${price ? fmtUSD(w.liquidDYDX * price) : "—"}</div>
           </div>
           <div class="kv">
             <div class="k">Staked DYDX</div>
-            <div class="v">${fmtToken(w.stakedDYDX, "DYDX", 2)}</div>
+            <div class="v">${fmtToken(w.stakedDYDX, "DYDX")}</div>
             <div class="s">${price ? fmtUSD(w.stakedDYDX * price) : "—"}</div>
           </div>
           <div class="kv">
             <div class="k">Unbonding DYDX</div>
-            <div class="v">${fmtToken(w.unbondingDYDX, "DYDX", 2)}</div>
+            <div class="v">${fmtToken(w.unbondingDYDX, "DYDX")}</div>
             <div class="s">${price ? fmtUSD(w.unbondingDYDX * price) : "—"}</div>
           </div>
           <div class="kv">
-            <div class="k">Pending Rewards</div>
-            <div class="v">${fmtToken(w.rewardsDYDX, "DYDX", 4)}</div>
+            <div class="k">Pending DYDX Rewards</div>
+            <div class="v">${fmtToken(w.rewardsDYDX, "DYDX")}</div>
             <div class="s">${price ? fmtUSD(w.rewardsDYDX * price) : "—"}</div>
           </div>
           <div class="kv">
-            <div class="k">USDC Balance</div>
-            <div class="v">${fmtToken(w.usdc, "USDC", 2)}</div>
-            <div class="s">≈ ${fmtUSD(w.usdc)}</div>
+            <div class="k">Liquid USDC</div>
+            <div class="v">${fmtToken(w.liquidUSDC, "USDC")}</div>
+            <div class="s">≈ ${fmtUSD(w.liquidUSDC)}</div>
           </div>
           <div class="kv">
+            <div class="k">Pending USDC Rewards</div>
+            <div class="v">${fmtToken(w.rewardsUSDC, "USDC")}</div>
+            <div class="s">≈ ${fmtUSD(w.rewardsUSDC)}</div>
+          </div>
+          <div class="kv total">
             <div class="k">Total DYDX</div>
-            <div class="v">${fmtToken(totalDYDX, "DYDX", 2)}</div>
+            <div class="v">${fmtToken(totalDYDX, "DYDX")}</div>
             <div class="s">${price ? fmtUSD(totalDYDX * price) : "—"}</div>
+          </div>
+          <div class="kv total">
+            <div class="k">Total USDC</div>
+            <div class="v">${fmtToken(totalUSDC, "USDC")}</div>
+            <div class="s">≈ ${fmtUSD(totalUSDC)}</div>
           </div>
         </div>
 
@@ -616,20 +643,20 @@
     let dydxSum = 0, usdcSum = 0;
     for (const w of wallets) {
       dydxSum += w.liquidDYDX + w.stakedDYDX + w.unbondingDYDX + w.rewardsDYDX;
-      usdcSum += w.usdc;
+      usdcSum += w.totalUSDC; // liquid + pending USDC rewards
     }
     const dydxUSD = price ? dydxSum * price : 0;
     const grandUSD = dydxUSD + usdcSum;
 
-    byId("price-usd").textContent = price ? fmtUSD(price) : "—";
-    byId("total-dydx").textContent = fmtToken(dydxSum, "DYDX", 2);
-    byId("total-usdc").textContent = fmtToken(usdcSum, "USDC", 2);
+    byId("price-usd").textContent = fmtPrice(price);
+    byId("total-dydx").textContent = fmtToken(dydxSum, "DYDX");
+    byId("total-usdc").textContent = fmtToken(usdcSum, "USDC");
     byId("total-usd").textContent = price ? fmtUSD(grandUSD) : "—";
 
     byId("grand-total-usd").textContent = price ? fmtUSD(grandUSD) : "—";
-    byId("grand-dydx").textContent = fmtToken(dydxSum, "DYDX", 2);
+    byId("grand-dydx").textContent = fmtToken(dydxSum, "DYDX");
     byId("grand-dydx-usd").textContent = price ? fmtUSD(dydxUSD) : "—";
-    byId("grand-usdc").textContent = fmtToken(usdcSum, "USDC", 2);
+    byId("grand-usdc").textContent = fmtToken(usdcSum, "USDC");
   }
 
   function renderErrors() {
