@@ -339,33 +339,9 @@
       <div class="sub">incl. pending staking rewards</div>
     </div>
     <div class="metric">
-      <div class="label">Wallets tracked</div>
-      <div class="value">3</div>
-      <div class="sub">Staking · Buyback · Rev Share</div>
-    </div>
-  </div>
-
-  <!-- Top stats strip -->
-  <div class="price-strip">
-    <div class="stat">
-      <div class="k">DYDX Price</div>
-      <div class="v" id="price-usd"><span class="skeleton">$0.00</span></div>
-      <div class="sv">via CoinGecko</div>
-    </div>
-    <div class="stat">
-      <div class="k">Total DYDX (all wallets)</div>
-      <div class="v" id="total-dydx"><span class="skeleton">0 DYDX</span></div>
-      <div class="sv">liquid + staked + unbonding</div>
-    </div>
-    <div class="stat">
-      <div class="k">Total USDC (all wallets)</div>
-      <div class="v" id="total-usdc"><span class="skeleton">0 USDC</span></div>
-      <div class="sv">liquid + pending rewards</div>
-    </div>
-    <div class="stat">
-      <div class="k">Treasury Total (USD)</div>
-      <div class="v" id="total-usd"><span class="skeleton">$0</span></div>
-      <div class="sv">DYDX × price + USDC</div>
+      <div class="label">DYDX Price</div>
+      <div class="value" id="price-usd"><span class="skeleton">$0.00</span></div>
+      <div class="sub">via CoinGecko</div>
     </div>
   </div>
 
@@ -649,9 +625,6 @@
     const grandUSD = dydxUSD + usdcSum;
 
     byId("price-usd").textContent = fmtPrice(price);
-    byId("total-dydx").textContent = fmtToken(dydxSum, "DYDX");
-    byId("total-usdc").textContent = fmtToken(usdcSum, "USDC");
-    byId("total-usd").textContent = price ? fmtUSD(grandUSD) : "—";
 
     byId("grand-total-usd").textContent = price ? fmtUSD(grandUSD) : "—";
     byId("grand-dydx").textContent = fmtToken(dydxSum, "DYDX");
